@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Calendar {
+  id            String   @id @default(uuid())
+  name          String
+  slug          String   @unique // For URL access
+  backgroundUrl String?
+  password      String?  // Optional password for access
+  isPublished   Boolean  @default(false)
+  isTest        Boolean  @default(false) // Allows opening any day regardless of date
+  defaultStyle  String   @default("circle") // Default style for new days: circle, square
+  defaultColor  String   @default("#dc2626") // Default background color (red-600)
+  defaultTextColor String @default("#ffffff") // Default text color (white)
+  defaultSize   Float    @default(6.5) // Default size as percentage of container width
+  defaultFontSize Float  @default(40) // Default font size as percentage of container width (cqw)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  days          Day[]
+}
+
+model Day {
+  id          String   @id @default(uuid())
+  dayNumber   Int
+  content     String?  // JSON string for content (text, photo url, music url)
+  contentType String   @default("text") // text, photo, music
+  style       String   @default("circle") // circle, square
+  backgroundColor String? // Custom override
+  textColor   String?  // Custom override
+  size        Float?   // Custom override for size
+  fontSize    Float?   // Custom override for font size
+  positionX   Float    // Percentage or pixels
+  positionY   Float    // Percentage or pixels
+  calendarId  String
+  calendar    Calendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+  opens       DayOpen[]
+
+  @@unique([calendarId, dayNumber])
+}
+
+model DayOpen {
+  id        String   @id @default(uuid())
+  dayId     String
+  day       Day      @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  openedAt  DateTime @default(now())
+  // In a real app with auth, we'd link this to a userId or session
+  // For now, we'll just store it to know it's been opened globally (or client-side tracking is better for simple apps)
+  // BUT: Requirement implies persistence? 
+  // "User page" implies viewing. 
+  // Usually advent calendars store state per user. Since we have no user auth, we can use LocalStorage on client.
+  // If we modify DB, it opens for EVERYONE.
+  // Let's assume LocalStorage for now as it's a simple web app.
+}
