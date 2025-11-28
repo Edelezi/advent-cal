@@ -181,3 +181,50 @@ export async function deleteDay(dayId: string, calendarId: string) {
   await prisma.day.delete({ where: { id: dayId } });
   revalidatePath(`/admin/${calendarId}`);
 }
+
+export async function fillCalendarDays(calendarId: string) {
+  const calendar = await prisma.calendar.findUnique({
+    where: { id: calendarId },
+    include: { days: true },
+  });
+
+  if (!calendar) throw new Error("Calendar not found");
+
+  const existingDayNumbers = new Set(calendar.days.map((d) => d.dayNumber));
+  const newDays = [];
+
+  for (let i = 1; i <= 24; i++) {
+    if (!existingDayNumbers.has(i)) {
+      // Calculate position in a 6x4 grid
+      // Columns: 0-5, Rows: 0-3
+      const col = (i - 1) % 6;
+      const row = Math.floor((i - 1) / 6);
+      
+      // Margins: 10%
+      // Width available: 80%
+      // Col step: 80 / 5 = 16%
+      const positionX = 10 + col * 15;
+      
+      // Height available: 80%
+      // Row step: 80 / 3 = 26%
+      const positionY = 10 + row * 20;
+
+      newDays.push({
+        dayNumber: i,
+        content: JSON.stringify({ text: "" }),
+        contentType: "text",
+        style: calendar.defaultStyle || "circle",
+        positionX,
+        positionY,
+        calendarId,
+      });
+    }
+  }
+
+  if (newDays.length > 0) {
+    await prisma.day.createMany({
+      data: newDays,
+    });
+    revalidatePath(`/admin/${calendarId}`);
+  }
+}

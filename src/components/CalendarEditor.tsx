@@ -21,7 +21,13 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { saveDay, deleteDay, uploadMedia, updateCalendar } from "@/app/actions";
+import {
+  saveDay,
+  deleteDay,
+  uploadMedia,
+  updateCalendar,
+  fillCalendarDays,
+} from "@/app/actions";
 import { useRouter } from "next/navigation";
 import { Plus, Trash, Settings, Save, Gift } from "lucide-react";
 import Image from "next/image";
@@ -92,6 +98,15 @@ export default function CalendarEditor({ calendar }: { calendar: Calendar }) {
     setDays([...days, newDay]);
     setSelectedDay(newDay);
     setIsDayDialogOpen(true);
+  };
+
+  const handleFillDays = async () => {
+    if (!confirm("This will add any missing days from 1 to 24. Continue?"))
+      return;
+    setIsSaving(true);
+    await fillCalendarDays(calendar.id);
+    router.refresh();
+    setIsSaving(false);
   };
 
   const handleEditDay = (day: Day) => {
@@ -179,6 +194,9 @@ export default function CalendarEditor({ calendar }: { calendar: Calendar }) {
           </Button>
           <Button onClick={handleAddDay}>
             <Plus className="w-4 h-4 mr-2" /> Add Day
+          </Button>
+          <Button onClick={handleFillDays} variant="secondary">
+            <Gift className="w-4 h-4 mr-2" /> Fill 24
           </Button>
           <Button variant="outline" onClick={() => router.push("/admin")}>
             Exit
