@@ -5,8 +5,18 @@ import { revalidatePath } from "next/cache";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { v4 as uuidv4 } from "uuid";
+import { put } from "@vercel/blob";
 
 async function uploadFile(file: File): Promise<string> {
+  // Use Vercel Blob if configured (production)
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    const blob = await put(file.name, file, {
+      access: "public",
+    });
+    return blob.url;
+  }
+
+  // Fallback to local filesystem (development)
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
 

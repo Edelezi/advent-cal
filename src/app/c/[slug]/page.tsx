@@ -16,3 +16,4 @@ export default async function CalendarPage({ params }: PageProps) {
 
   return <CalendarDisplay calendar={calendar} />;
 }
+

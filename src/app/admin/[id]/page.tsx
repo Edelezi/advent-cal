@@ -16,3 +16,4 @@ export default async function EditCalendarPage({ params }: PageProps) {
 
   return <CalendarEditor calendar={calendar} />;
 }
+
